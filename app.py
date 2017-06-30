@@ -58,7 +58,6 @@ def verify():
 # Punto de llegada para mensajes
 @app.route('/', methods=['POST'])
 def webhook():
-    print("hello")
     data = request.get_json()
     if data["object"] == "page":
         for entry in data["entry"]:
