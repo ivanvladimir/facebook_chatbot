@@ -5,15 +5,14 @@ from __future__ import print_function
 from flask import Flask, request
 from tinydb import TinyDB, Query
 import argparse
+import json
+import requests
 import os
 import aiml
 import config
 
 # Carga aplicación Flask
 app = Flask(__name__)
-
-# Habilita sockets in aplicación Flaks
-socketio = SocketIO(app)
 
 # Carga nucleo de AIML
 k = aiml.Kernel()
@@ -59,6 +58,7 @@ def verify():
 # Punto de llegada para mensajes
 @app.route('/', methods=['POST'])
 def webhook():
+    print("hello")
     data = request.get_json()
     if data["object"] == "page":
         for entry in data["entry"]:
@@ -72,13 +72,13 @@ def webhook():
 
                     user=db.search(Usuario.user == sender_id)
                     if len(user)==0:
-                        user=db.insert({'user':username,'conversations':[[]]})
+                        user=db.insert({'user':sender_id,'conversations':[[]]})
                         user=db.get(eid=user)
                     else:
                         user=user[0]
-                    ans=k.respond(message_)
+                    ans=k.respond(message_text)
                     conv=user['conversations']
-                    conv[-1].append({'msg':message_,'ans':ans})
+                    conv[-1].append({'msg':message_text,'ans':ans})
                     db.update({'conversations':conv},eids=[user.eid])
                     send_message(sender_id, ans)
 
@@ -118,7 +118,6 @@ if __name__ == '__main__':
     k.learn(opts.aiml)
     k.respond("load aiml b")
 
-    socketio.run(app,
-	    debug=opts.debug,
+    app.run(debug=opts.debug,
             host=opts.host,
             port=opts.port)
